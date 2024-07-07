@@ -2,12 +2,6 @@ import mongoose, { connect } from "mongoose";
 
 import { DB_NAME } from "../constants.js";
 
-// mongoose.connect("mongodb://localhost/myDatabase", {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
-//   useCreateIndex: true,
-// });
-
 const connectDB = async () => {
   try {
     const connectionInstance = await mongoose.connect(
