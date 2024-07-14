@@ -22,7 +22,6 @@ const registerUser = asyncHandler(async (req, res) => {
   // remove refresh token and pass from response
   // check for user creation
   // return respo or send error
-  //
 
   // console.log("username::", username);
 
@@ -41,7 +40,8 @@ const registerUser = asyncHandler(async (req, res) => {
   } else {
     throw new ApiError(400, "All fields are required");
   }
-    */
+  */
+
   const { username, email, fullName, password } = req.body;
 
   if (
@@ -50,16 +50,31 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existedUser = User.findOne({
+  const existingUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
-  if (existedUser) {
+  if (existingUser) {
     throw new ApiError(409, "Username or email already exists");
   }
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+  /* This code snippet is checking if there are files attached to the request (`req.files`) and if there
+is an array of files under the key `coverImage` in the request files. If these conditions are met,
+it assigns the path of the first file in the `coverImage` array to the variable
+`coverImageLocalPath`. This is a way to handle the case where there may be multiple files uploaded
+with the key `coverImage`, and it ensures that the path of the first file is stored in
+`coverImageLocalPath` for further processing. */
+  // let coverImageLocalPath;
+  // if (
+  //   req.files &&
+  //   Array.isArray(req.files.coverImage) &&
+  //   req.files.coverImage.length > 0
+  // ) {
+  //   coverImageLocalPath = req.files.coverImage[0].path;
+  // }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar not found/ Avatar file is required");
