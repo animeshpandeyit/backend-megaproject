@@ -36,7 +36,8 @@ const uploadOnCloudinary = async (localFilePath) => {
     return uploadResult;
   } catch (error) {
     console.log(error);
-
+    fs.unlinkSync(localFilePath);
+    return null;
     // console.error("Error uploading file to cloudinary:", error);
     // return null;
     /* `fs.unlinkSync(localFilePath);` is a synchronous method in Node.js that deletes the file
@@ -44,8 +45,6 @@ const uploadOnCloudinary = async (localFilePath) => {
     delete the local file after it has been successfully uploaded to Cloudinary. This helps in
     cleaning up the local storage after the file has been transferred to the cloud storage to free
     up space and maintain cleanliness. */
-    fs.unlinkSync(localFilePath);
-    return null;
   }
 };
 

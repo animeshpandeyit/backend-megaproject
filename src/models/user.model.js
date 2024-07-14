@@ -66,6 +66,8 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
+/* This code snippet is a pre-save hook in Mongoose that is executed before saving a user document to
+the database. */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
@@ -74,6 +76,9 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+/* The `userSchema.methods.isPasswordCorrect` function is a method defined on the userSchema in
+Mongoose. It is used to compare a provided password with the hashed password stored in the user
+document. */
 userSchema.methods.isPasswordCorrect = async function (password) {
   await bcrypt.compare(password, this.password);
 };
