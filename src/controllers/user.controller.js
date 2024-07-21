@@ -403,4 +403,5 @@ export {
   logOutUser,
   getLoggedInUserInfo,
   refreshAccessToken,
+  changeCurrentPassword,
 };
