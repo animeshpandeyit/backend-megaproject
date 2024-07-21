@@ -12,13 +12,22 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
-    const accessToken = user.generateAccessToken(); // access token == user
-    const refreshToken = user.generateRefreshToken(); // refresh token == db store
+
+    const accessToken = user.generateAccessToken();
+
+    const refreshToken = user.generateRefreshToken();
+
     user.refreshToken = refreshToken;
+
     await user.save({
       validateBeforeSave: false,
     });
     return { accessToken, refreshToken };
+
+    /* 
+    1. we give accessToken to the user....
+    2. we store refreshToken in database to make sure we don't have to give password again and again
+    */
   } catch (error) {
     throw new ApiError(
       500,
@@ -28,19 +37,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // res.status(200).json({
-  //   message: "Ok",
-  // });
-  // get user details from frontend
-  // validations - not empty
-  // check if user is already registered/exists :- username and email
-  // check for images, check for avatar images
-  // upload them cloudinary , avatar check
-  // create user object - create entry in db
-  // remove refresh token and pass from response
-  // check for user creation
-  // return respo or send error
-
   // console.log("username::", username);
 
   /*
@@ -79,12 +75,6 @@ const registerUser = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.files?.avatar[0]?.path;
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-  /* This code snippet is checking if there are files attached to the request (`req.files`) and if there
-is an array of files under the key `coverImage` in the request files. If these conditions are met,
-it assigns the path of the first file in the `coverImage` array to the variable
-`coverImageLocalPath`. This is a way to handle the case where there may be multiple files uploaded
-with the key `coverImage`, and it ensures that the path of the first file is stored in
-`coverImageLocalPath` for further processing. */
   // let coverImageLocalPath;
   // if (
   //   req.files &&
@@ -133,95 +123,85 @@ with the key `coverImage`, and it ensures that the path of the first file is sto
   */
 });
 
-const loginUser = asyncHandler(async (req, res) => {
-  /*
-  1. request body ==> data
-  2. username or email (login on what basis)
-  3. find the user
-  4. check if password is correct
-  5. generate and send jwt token {access and refresh token}
-  6. send the jwt token to client ==? send cookies
-  7. res ==> successfully logged-in .
-  */
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, username, password } = req.body;
 
-  const { email, username, password } = req.body;
+//   if (!username || !email) {
+//     throw new ApiError(400, "Invalid username || email is required");
+//   }
 
-  if (!username || !email) {
-    throw new ApiError(400, "Invalid username || email is required");
-  }
+//   const user = await User.findOne({
+//     $or: [{ username: username, email: email }],
+//   });
 
-  const user = await User.findOne({
-    $or: [{ username: username, email: email }],
-  });
+//   if (!user) {
+//     throw new ApiError(401, "User not found");
+//   }
 
-  if (!user) {
-    throw new ApiError(401, "User not found");
-  }
+//   /* we are using the small case user not the capital User [capital User is a monogoose object] if
+// we want to use our own generated methods then we have to use small case user.....
+// */
 
-  /* we are using the small case user not the capital User [capital User is a monogoose object] if 
-we want to use our own generated methods then we have to use small case user.....
-*/
+//   const isPasswordValid = await user.isPasswordCorrect(password);
 
-  const isPasswordValid = await user.isPasswordCorrect(password);
+//   if (!isPasswordValid) {
+//     throw new ApiError(401, "Invalid password ");
+//   }
 
-  if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid password ");
-  }
+//   const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+//     user._id
+//   );
 
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
-    user._id
-  );
+//   const loggedInUser = await User.findById(user._id).select(
+//     "-password -refreshToken"
+//   );
 
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
+//   const options = {
+//     httpOnly: true,
+//     secure: true,
+//   };
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+//   return res
+//     .status(200)
+//     .cookie("access_token", accessToken, options)
+//     .cookie("refresh_token", refreshToken, options)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         {
+//           user: loggedInUser,
+//           accessToken,
+//           refreshToken,
+//         },
+//         "User is authenticated and logged in successfully"
+//       )
+//     );
+// });
 
-  return res
-    .status(200)
-    .cookie("access_token", accessToken, options)
-    .cookie("refresh_token", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          user: loggedInUser,
-          accessToken,
-          refreshToken,
-        },
-        "User is authenticated and logged in successfully"
-      )
-    );
-});
+// const logOutUser = asyncHandler(async (req, res) => {
+//   await User.findByIdAndUpdate(
+//     req.user._id,
+//     {
+//       $set: {
+//         refreshToken: undefined,
+//       },
+//     },
+//     {
+//       new: true,
+//     }
+//   );
 
-const logOutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        refreshToken: undefined,
-      },
-    },
-    {
-      new: true,
-    }
-  );
+//   const options = {
+//     httpOnly: true,
+//     secure: true,
+//   };
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .clearCookie("access_token", options)
-    .clearCookie("refresh_token", options)
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
-});
+//   return res
+//     .status(200)
+//     .clearCookie("access_token", options)
+//     .clearCookie("refresh_token", options)
+//     .json(new ApiResponse(200, {}, "User logged out successfully"));
+// });
 
 /*
 express.get("/", (req, res, next) => {
@@ -245,4 +225,96 @@ const asyncHandler = (requestHandler) => {
 };
 */
 
-export { registerUser, loginUser, logOutUser };
+const loginUser = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email) {
+    throw new ApiError(400, "Invalid username or email is required");
+  }
+
+  // if (!(username || email)) {
+  // }
+  const user = await User.findOne({
+    $or: [{ username: username.toLowerCase(), email: email.toLowerCase() }],
+  });
+
+  if (!user) {
+    throw new ApiError(401, "User not found");
+  }
+
+  const isPasswordValid = user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid password ");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+    user._id
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        },
+
+        "User logged in successfully "
+      )
+    );
+});
+
+const logOutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: {
+        refreshToken: 1, // this removes the field from document
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
+const getLoggedInUserInfo = asyncHandler(async (req, res) => {
+  // const loggedInUser = await User.findById(req.user._id).select(
+  //   "-password -refreshToken"
+  // );
+  // if (!loggedInUser) {
+  //   throw new ApiError(401, "User not found");
+  // }
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+});
+
+export { registerUser, loginUser, logOutUser, getLoggedInUserInfo };

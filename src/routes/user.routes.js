@@ -3,9 +3,10 @@ import {
   registerUser,
   loginUser,
   logOutUser,
+  getLoggedInUserInfo,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { verifyJwt } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 
 // protected routes
-router.route("/logout").post(verifyJwt, logOutUser);
+router.route("/logout").post(verifyJWT, logOutUser);
+router.route("/loggenInUser").get(verifyJWT, getLoggedInUserInfo);
 
 export default router;
